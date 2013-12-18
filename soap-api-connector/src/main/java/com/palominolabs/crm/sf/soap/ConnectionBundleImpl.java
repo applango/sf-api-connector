@@ -17,6 +17,7 @@
 package com.palominolabs.crm.sf.soap;
 
 import com.codahale.metrics.MetricRegistry;
+import com.palominolabs.crm.Credentials;
 import com.palominolabs.crm.sf.core.Id;
 import com.palominolabs.crm.sf.soap.jaxwsstub.apex.ApexPortType;
 import com.palominolabs.crm.sf.soap.jaxwsstub.metadata.MetadataPortType;
@@ -68,6 +69,10 @@ final class ConnectionBundleImpl implements ConnectionBundle {
     @Nonnull
     private String password;
 
+    @GuardedBy("this")
+    @Nonnull
+    private Credentials credentials = null;
+
     /**
      * Null if there is no current session, etc to use.
      */
@@ -87,6 +92,15 @@ final class ConnectionBundleImpl implements ConnectionBundle {
         this.updateCredentials(username, password, maxConcurrentApiCalls);
     }
 
+    private ConnectionBundleImpl(Credentials credentials, int maxConcurrentApiCalls,
+            BindingRepository bindingRepository, boolean sandboxOrg, MetricRegistry metricRegistry) {
+        this.sandboxOrg = sandboxOrg;
+        this.bindingRepository = bindingRepository;
+        this.metricRegistry = metricRegistry;
+        this.callSemaphore = new CallSemaphore();
+        this.updateCredentials(credentials, maxConcurrentApiCalls);
+    }
+
     /**
      * Get a new ConnectionBundle for a standard SF org (not a sandbox).
      *
@@ -103,6 +117,11 @@ final class ConnectionBundleImpl implements ConnectionBundle {
 
         return new ConnectionBundleImpl(username, password, maxConcurrentApiCalls, bindingRepository, false,
                 metricRegistry);
+    }
+
+    static ConnectionBundleImpl getNew(BindingRepository bindingRepository, Credentials credentials,
+            int maxConcurrentApiCalls, MetricRegistry metricRegistry) {
+        return new ConnectionBundleImpl(credentials, maxConcurrentApiCalls, bindingRepository, false, metricRegistry);
     }
 
     /**
@@ -124,6 +143,11 @@ final class ConnectionBundleImpl implements ConnectionBundle {
 
         return new ConnectionBundleImpl(username, password, maxConcurrentApiCalls, bindingRepository, true,
                 metricRegistry);
+    }
+
+    static ConnectionBundleImpl getNewForSandbox(@Nonnull BindingRepository bindingRepository,
+            @Nonnull Credentials credentials, int maxConcurrentApiCalls, MetricRegistry metricRegistry) {
+        return new ConnectionBundleImpl(credentials, maxConcurrentApiCalls, bindingRepository, true, metricRegistry);
     }
 
     synchronized void updateCredentials(@Nonnull String newUsername, @Nonnull String newPassword,
@@ -149,6 +173,13 @@ final class ConnectionBundleImpl implements ConnectionBundle {
             this.username = newUsername;
             this.password = newPassword;
         }
+    }
+
+    synchronized void updateCredentials(Credentials credentials, int maxConcurrentApiCalls) {
+        this.credentials = credentials;
+        this.username = "usingToken";
+        this.password = "usingToken";
+        this.callSemaphore.setMaxPermits(maxConcurrentApiCalls);
     }
 
     @Nonnull
@@ -235,12 +266,12 @@ final class ConnectionBundleImpl implements ConnectionBundle {
     @Nonnull
     public synchronized BindingConfig getBindingConfig() throws ApiException {
         if (this.bindingConfig == null) {
-            // need to login to get a session id
+            // need to login to get a session id or use the token
 
             BindingConfig newBindingConfig;
 
             newBindingConfig = this.bindingRepository
-                    .getBindingConfigData(this.username, this.password, this.callSemaphore, this.sandboxOrg);
+                        .getBindingConfigData(credentials, this.callSemaphore, this.sandboxOrg);
             String sessionId = newBindingConfig.getSessionId();
 
             // never been set -- this is the first connection

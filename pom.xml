@@ -33,6 +33,14 @@
       <timezone>-8</timezone>
     </developer>
   </developers>
+  <distributionManagement>
+    <snapshotRepository>
+      <id>applangoart</id>
+      <name>applangoart-snapshots</name>
+      <url>http://localhost:8081/artifactory/libs-snapshot-local</url>
+    </snapshotRepository>
+  </distributionManagement>
+
 
   <properties>
     <!-- dependency versions -->
@@ -61,6 +69,7 @@
   <modules>
     <module>test-util</module>
     <module>test-logging-config</module>
+    <module>sf-credentials</module>
     <module>soap-api-connector</module>
     <module>metadata-api-binding</module>
     <module>partner-api-binding</module>
@@ -83,7 +92,11 @@
         <version>${project.version}</version>
         <scope>test</scope>
       </dependency>
-
+      <dependency>
+        <groupId>com.palominolabs.salesforce</groupId>
+        <artifactId>sf-integration</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <dependency>
         <groupId>com.palominolabs.salesforce</groupId>
         <artifactId>metadata-api-binding</artifactId>

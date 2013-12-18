@@ -30,13 +30,18 @@ public final class BasicSObjectUrls extends AbstractSObjectUrls {
     @Nullable
     private final String passwordUtilities;
 
+    @Nullable
+    private final String quickActionsUrlPath;
+
     @JsonCreator
     BasicSObjectUrls(@Nonnull @JsonProperty("sobject") String sobjectUrlPath,
+            @Nonnull @JsonProperty("quickActions") String quickActionsUrlPath,
             @Nonnull @JsonProperty("describe") String describeUrlPath,
             @Nonnull @JsonProperty("rowTemplate") String rowTemplateUrlPath,
             @Nullable @JsonProperty("passwordUtilities") String passwordUtilities, @Nonnull @JsonProperty("layouts")  String layoutsPath) {
         super(describeUrlPath, rowTemplateUrlPath, sobjectUrlPath, layoutsPath);
         this.passwordUtilities = passwordUtilities;
+        this.quickActionsUrlPath = quickActionsUrlPath;
     }
 
     /**
@@ -48,5 +53,8 @@ public final class BasicSObjectUrls extends AbstractSObjectUrls {
     public String getPasswordUtilities() {
         return passwordUtilities;
     }
+
+    @Nullable
+    public String getQuickActionsUrlPath() { return quickActionsUrlPath; }
 
 }

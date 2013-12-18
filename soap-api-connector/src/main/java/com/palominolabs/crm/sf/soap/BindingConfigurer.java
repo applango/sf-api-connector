@@ -18,6 +18,9 @@ package com.palominolabs.crm.sf.soap;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
+import com.palominolabs.crm.Credentials;
+import com.palominolabs.crm.OAuth2Credentials;
+import com.palominolabs.crm.StandardCredentials;
 import com.palominolabs.crm.sf.core.Id;
 import com.palominolabs.crm.sf.soap.jaxwsstub.apex.ApexPortType;
 import com.palominolabs.crm.sf.soap.jaxwsstub.apex.DebuggingHeader;
@@ -218,6 +221,29 @@ final class BindingConfigurer {
 
         return new BindingConfig(orgId, sessionId, loginResult.getServerUrl(), loginResult.getMetadataServerUrl(),
                 username);
+    }
+
+    @Nonnull
+    BindingConfig loginAndGetBindingConfigData(@Nonnull Credentials credentials,
+            @Nonnull Soap binding, @Nonnull CallSemaphore callSemaphore, boolean sandboxOrg) throws ApiException {
+        if(credentials instanceof StandardCredentials) {
+            StandardCredentials standardCredentials = (StandardCredentials) credentials;
+            return loginAndGetBindingConfigData(standardCredentials.getUsername(), standardCredentials.getPassword(),
+                   binding, callSemaphore, sandboxOrg);
+        }  else {
+            OAuth2Credentials oAuth2Credentials = (OAuth2Credentials) credentials;
+            return loginAndGetBindingConfigData(oAuth2Credentials, binding, callSemaphore, sandboxOrg);
+        }
+    }
+
+    @Nonnull
+    BindingConfig loginAndGetBindingConfigData(@Nonnull OAuth2Credentials credentials,
+            @Nonnull Soap binding, @Nonnull CallSemaphore callSemaphore, boolean sandboxOrg) throws ApiException {
+        Id orgId = new Id(credentials.getOrganizationId());
+        String partnerServerUrl = credentials.getPartnerServerURL();
+        String metadataServerUrl = credentials.getMetadataServerURL();
+        String sessionId = credentials.getToken();
+        return new BindingConfig(orgId, sessionId, partnerServerUrl, metadataServerUrl, "tokenUser");
     }
 
     /**

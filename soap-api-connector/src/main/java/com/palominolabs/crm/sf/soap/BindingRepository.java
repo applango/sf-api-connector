@@ -17,6 +17,7 @@
 package com.palominolabs.crm.sf.soap;
 
 import com.codahale.metrics.MetricRegistry;
+import com.palominolabs.crm.Credentials;
 import com.palominolabs.crm.sf.soap.jaxwsstub.apex.ApexPortType;
 import com.palominolabs.crm.sf.soap.jaxwsstub.metadata.MetadataPortType;
 import com.palominolabs.crm.sf.soap.jaxwsstub.partner.Soap;
@@ -87,12 +88,12 @@ final class BindingRepository {
     }
 
     @Nonnull
-    BindingConfig getBindingConfigData(@Nonnull String username, @Nonnull String password,
-            @Nonnull CallSemaphore callSemaphore, boolean sandboxOrg) throws ApiException {
+    BindingConfig getBindingConfigData(@Nonnull Credentials credentials,@Nonnull CallSemaphore callSemaphore,
+            boolean sandboxOrg) throws ApiException {
         final Soap binding = this.partnerBindingCache.getBinding();
         try {
-            return this.bindingConfigurer
-                    .loginAndGetBindingConfigData(username, password, binding, callSemaphore, sandboxOrg);
+            return this.bindingConfigurer.
+                    loginAndGetBindingConfigData(credentials, binding, callSemaphore, sandboxOrg);
         } finally {
             this.releasePartnerBinding(binding);
         }

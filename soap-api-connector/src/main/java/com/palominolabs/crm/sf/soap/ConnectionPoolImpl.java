@@ -17,6 +17,7 @@
 package com.palominolabs.crm.sf.soap;
 
 import com.codahale.metrics.MetricRegistry;
+import com.palominolabs.crm.Credentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,6 +94,18 @@ public final class ConnectionPoolImpl<T> implements ConnectionPool<T> {
                 SANDBOX_BUNDLE_FACTORY);
     }
 
+    @Override
+    public synchronized  void configureOrg(@Nonnull T orgId,@Nonnull Credentials credentials,
+            int maxConcurrentApiCalls) {
+        configureOrgImpl(orgId, credentials, maxConcurrentApiCalls, orgIdToBundleMap, NORMAL_BUNDLE_FACTORY);
+    }
+
+    @Override
+    public synchronized  void configureSandboxOrg(@Nonnull T orgId,@Nonnull Credentials credentials,
+            int maxConcurrentApiCalls) {
+        configureOrgImpl(orgId, credentials, maxConcurrentApiCalls, orgIdToBundleMap, SANDBOX_BUNDLE_FACTORY);
+    }
+
     private void configureOrgImpl(T orgId, String username, String password, int maxConcurrentApiCalls,
             Map<T, ConnectionBundleImpl> bundles, BundleFactory bundleFactory) {
         ConnectionBundleImpl cp = bundles.get(orgId);
@@ -109,11 +122,25 @@ public final class ConnectionPoolImpl<T> implements ConnectionPool<T> {
         }
     }
 
+    private void configureOrgImpl(T orgId, Credentials credentials,  int maxConcurrentApiCalls,
+            Map<T, ConnectionBundleImpl> bundles, BundleFactory bundleFactory) {
+        ConnectionBundleImpl cp = bundles.get(orgId);
+
+        if(cp == null) {
+            bundles.put(orgId, bundleFactory.getBundle(this.bindingRepository, credentials, maxConcurrentApiCalls, metricRegistry));
+        } else {
+            cp.updateCredentials(credentials, maxConcurrentApiCalls);
+        }
+    }
+
     @ThreadSafe
     private static interface BundleFactory {
         @Nonnull
         ConnectionBundleImpl getBundle(@Nonnull BindingRepository bindingRepository, @Nonnull String username,
                 @Nonnull String password, int maxConcurrentApiCalls, MetricRegistry metricRegistry);
+
+        public ConnectionBundleImpl getBundle(BindingRepository bindingRepository, Credentials credentials,
+                int maxConcurrentApiCalls, MetricRegistry metricRegistry);
     }
 
     @Immutable
@@ -125,6 +152,11 @@ public final class ConnectionPoolImpl<T> implements ConnectionPool<T> {
             return ConnectionBundleImpl
                     .getNew(bindingRepository, username, password, maxConcurrentApiCalls, metricRegistry);
         }
+
+        public ConnectionBundleImpl getBundle(BindingRepository bindingRepository, Credentials credentials,
+                int maxConcurrentApiCalls, MetricRegistry metricRegistry) {
+            return ConnectionBundleImpl.getNew(bindingRepository, credentials, maxConcurrentApiCalls, metricRegistry);
+        }
     }
 
     @Immutable
@@ -135,6 +167,11 @@ public final class ConnectionPoolImpl<T> implements ConnectionPool<T> {
                 @Nonnull String password, int maxConcurrentApiCalls, MetricRegistry metricRegistry) {
             return ConnectionBundleImpl
                     .getNewForSandbox(bindingRepository, username, password, maxConcurrentApiCalls, metricRegistry);
+        }
+
+        public ConnectionBundleImpl getBundle(BindingRepository bindingRepository, Credentials credentials,
+                int maxConcurrentApiCalls, MetricRegistry metricRegistry) {
+            return ConnectionBundleImpl.getNewForSandbox(bindingRepository, credentials, maxConcurrentApiCalls, metricRegistry);
         }
     }
 }

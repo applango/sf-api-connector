@@ -16,6 +16,8 @@
 
 package com.palominolabs.crm.sf.soap;
 
+import com.palominolabs.crm.Credentials;
+
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -80,4 +82,10 @@ public interface ConnectionPool<T> {
      */
     void configureSandboxOrg(@Nonnull T orgIdentifier, @Nonnull String username, @Nonnull String password,
             int maxConcurrentApiCalls);
+
+
+    void configureOrg(@Nonnull T orgIdentifier, @Nonnull Credentials credentials, int maxConcurrentApiCalls);
+
+    void configureSandboxOrg(@Nonnull T orgIdentifier, @Nonnull Credentials credentials, int maxConcurrentApiCalls);
+
 }
