@@ -180,6 +180,7 @@ final class ConnectionBundleImpl implements ConnectionBundle {
         this.username = "usingToken";
         this.password = "usingToken";
         this.callSemaphore.setMaxPermits(maxConcurrentApiCalls);
+        this.bindingConfig = null;
     }
 
     @Nonnull
