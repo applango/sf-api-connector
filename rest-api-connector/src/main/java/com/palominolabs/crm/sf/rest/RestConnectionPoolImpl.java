@@ -20,6 +20,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.client.HttpClient;
+import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
@@ -68,6 +69,9 @@ public class RestConnectionPoolImpl<T> implements RestConnectionPool<T> {
         connectionManager = new PoolingHttpClientConnectionManager();
         connectionManager.setDefaultMaxPerRoute(20);
         connectionManager.setMaxTotal(60);
+
+        SocketConfig socketConfig = SocketConfig.custom().setSoTimeout(30000).build();
+        connectionManager.setDefaultSocketConfig(socketConfig);
 
         objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
