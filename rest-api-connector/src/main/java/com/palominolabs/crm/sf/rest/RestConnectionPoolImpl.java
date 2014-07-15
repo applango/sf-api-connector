@@ -70,7 +70,7 @@ public class RestConnectionPoolImpl<T> implements RestConnectionPool<T> {
         connectionManager.setDefaultMaxPerRoute(20);
         connectionManager.setMaxTotal(60);
 
-        SocketConfig socketConfig = SocketConfig.custom().setSoTimeout(30000).build();
+        SocketConfig socketConfig = SocketConfig.custom().setSoTimeout(300000).build();
         connectionManager.setDefaultSocketConfig(socketConfig);
 
         objectMapper = new ObjectMapper();
