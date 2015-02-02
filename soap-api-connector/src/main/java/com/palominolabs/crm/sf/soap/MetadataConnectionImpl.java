@@ -19,6 +19,8 @@ package com.palominolabs.crm.sf.soap;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.palominolabs.crm.sf.core.Id;
+import com.palominolabs.crm.sf.soap.jaxwsstub.metadata.DeployOptions;
+import com.palominolabs.crm.sf.soap.jaxwsstub.metadata.DeployResult;
 import com.palominolabs.crm.sf.soap.jaxwsstub.metadata.Metadata;
 import com.palominolabs.crm.sf.soap.jaxwsstub.metadata.MetadataPortType;
 import com.palominolabs.crm.sf.soap.jaxwsstub.metadata.UpdateMetadata;
@@ -114,6 +116,21 @@ final class MetadataConnectionImpl extends AbstractSalesforceConnection implemen
         }
 
         return convertStubAsyncResultList(new CheckStatusOp().execute(idStrList));
+    }
+
+    @Override
+    @Nonnull
+    public List<AsyncResult> deploy(@Nonnull byte[] zipFile, @Nonnull DeployOptions deployOptions) throws ApiException {
+        List<Object> params = new ArrayList<Object>();
+        params.add(zipFile);
+        params.add(deployOptions);
+        return convertStubAsyncResultList(new DeployOp().execute(params));
+    }
+
+    @Nonnull
+    @Override
+    public DeployResult checkDeployStatus(String idToCheck) throws ApiException {
+        return new CheckDeployStatusOp().execute(idToCheck);
     }
 
     @Override
@@ -252,6 +269,35 @@ final class MetadataConnectionImpl extends AbstractSalesforceConnection implemen
             return binding.checkStatus(param);
         }
     }
+
+    private class DeployOp extends
+            MetadataApiOperation<List<Object>, List<com.palominolabs.crm.sf.soap.jaxwsstub.metadata.AsyncResult>> {
+
+        @Nonnull
+        @Override
+        List<com.palominolabs.crm.sf.soap.jaxwsstub.metadata.AsyncResult> executeOp(@Nonnull MetadataPortType binding,
+                @Nonnull List<Object> param) {
+            // first parameter is a byte[] for the zip file contents
+            // second parameter is the DeployOptions
+            byte[] bytes = (byte[]) param.get(0);
+            DeployOptions deployOptions = (DeployOptions) param.get(1);
+            List<com.palominolabs.crm.sf.soap.jaxwsstub.metadata.AsyncResult> result =
+                    new ArrayList<com.palominolabs.crm.sf.soap.jaxwsstub.metadata.AsyncResult>();
+            result.add(binding.deploy(bytes, deployOptions));
+
+
+            return result;
+        }
+    }
+
+    private class CheckDeployStatusOp extends MetadataApiOperation<String, DeployResult> {
+        @Nonnull
+        @Override
+        DeployResult executeOp(@Nonnull MetadataPortType binding, @Nonnull String param) {
+            return binding.checkDeployStatus(param);
+        }
+    }
+
 
     private class CreateOp extends
             MetadataApiOperation<List<Metadata>, List<com.palominolabs.crm.sf.soap.jaxwsstub.metadata.AsyncResult>> {

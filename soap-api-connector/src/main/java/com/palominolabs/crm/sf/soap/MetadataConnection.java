@@ -17,6 +17,8 @@
 package com.palominolabs.crm.sf.soap;
 
 import com.palominolabs.crm.sf.core.Id;
+import com.palominolabs.crm.sf.soap.jaxwsstub.metadata.DeployOptions;
+import com.palominolabs.crm.sf.soap.jaxwsstub.metadata.DeployResult;
 import com.palominolabs.crm.sf.soap.jaxwsstub.metadata.Metadata;
 import com.palominolabs.crm.sf.soap.jaxwsstub.metadata.UpdateMetadata;
 
@@ -45,6 +47,13 @@ public interface MetadataConnection {
 
     @Nonnull
     List<AsyncResult> checkStatus(@Nonnull List<Id> idsToCheck) throws ApiException;
+
+
+    @Nonnull
+    List<AsyncResult> deploy(@Nonnull byte[] zipFile, @Nonnull DeployOptions deployOptions) throws ApiException;
+
+    @Nonnull
+    DeployResult checkDeployStatus(String idToCheck) throws ApiException;
 
     @Nonnull
     List<AsyncResult> create(@Nonnull List<Metadata> metadataList) throws ApiException;
