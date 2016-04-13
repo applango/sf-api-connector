@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013. Palomino Labs (http://palominolabs.com)
+ * Copyright 2013. Palomino Labs (http://palominolabs.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ import java.util.Map;
 @ThreadSafe
 final class HttpApiClient {
 
-    static final String API_VERSION = "28.0";
+    static final String API_VERSION = "32.0";
     static final TypeReference<List<ApiErrorImpl>> API_ERRORS_TYPE = new TypeReference<List<ApiErrorImpl>>() { };
     private static final String UPLOAD_CONTENT_TYPE = "application/json";
 

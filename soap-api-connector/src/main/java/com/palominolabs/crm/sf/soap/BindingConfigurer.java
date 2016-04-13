@@ -45,14 +45,22 @@ import com.sun.xml.ws.developer.JAXWSProperties;
 import com.sun.xml.ws.developer.WSBindingProvider;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
+import sun.security.ssl.SSLSocketFactoryImpl;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.ws.BindingProvider;
 import javax.xml.ws.WebServiceException;
 import javax.xml.ws.handler.MessageContext;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -135,8 +143,48 @@ final class BindingConfigurer {
         metadataWsBindingProvider.getRequestContext()
                 .put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, bindingConfig.getMetadataServerUrl());
 
+        metadataWsBindingProvider.getRequestContext().put(JAXWSProperties.SSL_SOCKET_FACTORY, getCustomSocketFactory());;
+
         logger.exit("User " + bindingConfig.getUsername() + ", session id " + bindingConfig.getSessionId() +
                 " on metadata server" + bindingConfig.getMetadataServerUrl());
+    }
+
+    private Object getCustomSocketFactory() {
+        System.setProperty("jsse.enableSNIExtension", "false");
+        TrustManager[] certs = new TrustManager[]
+                {
+                        new X509TrustManager()
+                        {
+                            @Override
+                            public X509Certificate[] getAcceptedIssuers()
+                            {
+                                return null;
+                            }
+
+                            @Override
+                            public void checkServerTrusted(X509Certificate[] chain, String authType)
+                                    throws CertificateException
+                            {
+                            }
+
+                            @Override
+                            public void checkClientTrusted(X509Certificate[] chain, String authType)
+                                    throws CertificateException
+                            {
+                            }
+                        }
+                };
+        SSLContext ctx = null;
+        try
+        {
+            ctx = SSLContext.getInstance("TLSv1.2");
+            ctx.init(null, certs, new SecureRandom());
+        }
+        catch (java.security.GeneralSecurityException ex)
+        {
+        }
+        SSLSocketFactory factory = ctx.getSocketFactory();
+        return factory;
     }
 
     /**
@@ -171,6 +219,8 @@ final class BindingConfigurer {
             wsBindingProvider.getRequestContext()
                     .put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, NORMAL_INITIAL_ENDPOINT);
         }
+
+        wsBindingProvider.getRequestContext().put(JAXWSProperties.SSL_SOCKET_FACTORY, getCustomSocketFactory());;
 
         logger.trace("Using initial endpoint: " +
                 wsBindingProvider.getRequestContext().get(BindingProvider.ENDPOINT_ADDRESS_PROPERTY));
@@ -258,6 +308,8 @@ final class BindingConfigurer {
         wsBindingProvider.getRequestContext()
                 .put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, bindingConfig.getPartnerServerUrl());
 
+        wsBindingProvider.getRequestContext().put(JAXWSProperties.SSL_SOCKET_FACTORY, getCustomSocketFactory());;
+
         // Set the session Id in the header
         SessionHeader sessionHeader = new SessionHeader();
         sessionHeader.setSessionId(bindingConfig.getSessionId());
@@ -309,6 +361,7 @@ final class BindingConfigurer {
 
         apexWsBindingProvider.getRequestContext()
                 .put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, bindingConfig.getApexServerUrl());
+        apexWsBindingProvider.getRequestContext().put(JAXWSProperties.SSL_SOCKET_FACTORY, getCustomSocketFactory());;
 
         logger.exit("User " + bindingConfig.getUsername() + ", session id " + bindingConfig.getSessionId() +
                 " on apex server" + bindingConfig.getApexServerUrl());

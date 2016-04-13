@@ -20,13 +20,21 @@ import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.client.HttpClient;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
 import org.apache.http.config.SocketConfig;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.ssl.SSLContexts;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
+import javax.net.ssl.SSLContext;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -66,16 +74,28 @@ public class RestConnectionPoolImpl<T> implements RestConnectionPool<T> {
     public RestConnectionPoolImpl(MetricRegistry metricRegistry, int idleConnTimeout) {
         this.metricRegistry = metricRegistry;
 
-        connectionManager = new PoolingHttpClientConnectionManager();
+        SSLContext sslContext = null;
+        try {
+            sslContext = SSLContexts.custom().useProtocol("TLSv1.2").build();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext);
+
+        Registry<ConnectionSocketFactory> r = RegistryBuilder.<ConnectionSocketFactory>create()
+                .register("https", sslsf)
+                .build();
+
+        connectionManager = new PoolingHttpClientConnectionManager(r);
         connectionManager.setDefaultMaxPerRoute(20);
         connectionManager.setMaxTotal(60);
+
 
         SocketConfig socketConfig = SocketConfig.custom().setSoTimeout(300000).build();
         connectionManager.setDefaultSocketConfig(socketConfig);
 
         objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
         this.httpClient = HttpClientBuilder.create().setConnectionManager(connectionManager).build();
         this.idleConnTimeout = idleConnTimeout;
     }

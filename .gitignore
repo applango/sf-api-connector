@@ -3,3 +3,6 @@
 target/
 .directory
 .DS_Store
+.classpath
+.project
+.settings

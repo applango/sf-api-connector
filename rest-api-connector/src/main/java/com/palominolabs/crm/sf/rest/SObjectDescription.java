@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013. Palomino Labs (http://palominolabs.com)
+ * Copyright (c) 2013. Palomino Labs (http://palominolabs.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,10 @@ public final class SObjectDescription {
     private final boolean undeletable;
     private final boolean triggerable;
 
+    private final List namedLayoutInfos; //New Field
+    private final boolean compactLayoutable; // New Field
+    private final List actionOverrides; //New Field
+
     @JsonCreator
     SObjectDescription(
             @JsonProperty("name") String name,
@@ -65,6 +69,7 @@ public final class SObjectDescription {
             @JsonProperty("keyPrefix") String keyPrefix,
             @JsonProperty("labelPlural") String labelPlural,
             @JsonProperty("layoutable") boolean layoutable,
+            @JsonProperty("namedLayoutInfos") List namedLayoutInfos, //TODO implement namedLayouts
             @JsonProperty("activateable") boolean activateable,
             @JsonProperty("updateable") boolean updateable,
             @JsonProperty("urls") SObjectUrls sObjectUrls,
@@ -85,7 +90,10 @@ public final class SObjectDescription {
             @JsonProperty("retrieveable") boolean retrieveable,
             @JsonProperty("searchLayoutable") String searchLayoutable,
             @JsonProperty("undeletable") boolean undeletable,
-            @JsonProperty("triggerable") boolean triggerable) {
+            @JsonProperty("triggerable") boolean triggerable,
+            @JsonProperty("compactLayoutable") boolean compactLayoutable,
+            @JsonProperty("actionOverrides") List actionOverrides  //TODO implement actionOverrides
+            ) { 
         this.name = name;
         this.label = label;
         this.custom = custom;
@@ -113,6 +121,9 @@ public final class SObjectDescription {
         this.searchLayoutable = searchLayoutable;
         this.undeletable = undeletable;
         this.triggerable = triggerable;
+        this.compactLayoutable = compactLayoutable;
+        this.namedLayoutInfos = ImmutableList.copyOf(namedLayoutInfos);
+        this.actionOverrides = ImmutableList.copyOf(actionOverrides);
     }
 
     @Nonnull
